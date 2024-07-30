@@ -34,25 +34,37 @@ public class EController {
         }
     }
 
-    @PutMapping("/update/employee/{index}")
-    public ResponseEntity updateEmployee(@Valid @RequestBody Employee employee, Errors errors, @PathVariable int index) {
+    @PutMapping("/update/employee/{id}")
+    public ResponseEntity updateEmployee(@Valid @RequestBody Employee employee, Errors errors, @PathVariable String id) {
         if (errors.hasErrors()) {
             String message = errors.getFieldError().getDefaultMessage();
             return ResponseEntity.status(400).body(message);
         }else {
-            employees.set(index, employee);
-            return ResponseEntity.status(201).body("Employee updated successfully");
+            for (int i = 0; i < employees.size(); i++) {
+                if (employees.get(i).getId().equals(id)) {
+                    employees.get(i).setName(employee.getName());
+                    employees.get(i).setPosition(employee.getPosition());
+                    employees.get(i).setAge(employee.getAge());
+                    employees.get(i).setEmail(employee.getEmail());
+                    employees.get(i).setAnnualLeave(employee.getAnnualLeave());
+                    employees.get(i).setOnLeave(employee.isOnLeave());
+                    employees.get(i).setHireDate(employee.getHireDate());
+                    return ResponseEntity.status(201).body("Employee updated successfully");
+                }
+            }
+            return ResponseEntity.status(404).body("Employee not found");
         }
     }
 
-    @DeleteMapping("/delete/employee/{index}")
-    public ResponseEntity deleteEmployee(@PathVariable int index){
-        if (index>employees.size()) {
-            return ResponseEntity.status(404).body("Employee not found");
-        }else {
-            employees.remove(index);
-            return ResponseEntity.status(204).body("Employee deleted successfully");
-        }
+    @DeleteMapping("/delete/employee/{id}")
+    public ResponseEntity deleteEmployee(@PathVariable String id){
+       for (int i = 0; i < employees.size(); i++) {
+           if (employees.get(i).getId().equals(id)) {
+               employees.remove(i);
+               return ResponseEntity.status(204).body("Employee deleted successfully");
+           }
+       }
+       return ResponseEntity.status(404).body("Employee not found");
     }
 
     @GetMapping("/search/{position}")
@@ -94,18 +106,18 @@ public class EController {
        }
     }
 
-    @PutMapping("/update/leave/{index}")
-    public ResponseEntity updateEmployeeLeave(@PathVariable int index) {
+    @PutMapping("/update/leave/{id}")
+    public ResponseEntity updateEmployeeLeave(@PathVariable String id) {
         if (employees.isEmpty()) {
             return ResponseEntity.status(404).body("No employees");
         }else {
             for (int i = 0; i < employees.size(); i++) {
-                if (employees.contains(employees.get(index))){
-                    if (!employees.get(index).isOnLeave()){
-                        if (employees.get(index).getAnnualLeave()>0){
-                            employees.get(index).setOnLeave(true);
-                            employees.get(index).setAnnualLeave(employees.get(index).getAnnualLeave()-1);
-                            return ResponseEntity.status(204).body("Employee: "+employees.get(index).getName()+" leave successfully");
+                if (employees.get(i).getId().equals(id)){
+                    if (!employees.get(i).isOnLeave()){
+                        if (employees.get(i).getAnnualLeave()>0){
+                            employees.get(i).setOnLeave(true);
+                            employees.get(i).setAnnualLeave(employees.get(i).getAnnualLeave()-1);
+                            return ResponseEntity.status(204).body("Employee: "+employees.get(i).getName()+" leave successfully");
 
                         }else {
                             return ResponseEntity.status(404).body("you do not have any Annual Leave");
@@ -136,21 +148,18 @@ public class EController {
     }
 
 
-    @PutMapping("/update/promote/{postion}/{eindex}")
-    public ResponseEntity updateEmployeePromote(@PathVariable String postion,@PathVariable int eindex) {
-        if (eindex > employees.size()) {
-            return ResponseEntity.status(404).body("check employees index");
-        } else {
+    @PutMapping("/update/promote/{postion}/{id}")
+    public ResponseEntity updateEmployeePromote(@PathVariable String postion,@PathVariable String id) {
 
             if (employees.isEmpty()) {
                 return ResponseEntity.status(404).body("No employees");
             } else {
                 if (postion.equalsIgnoreCase("supervisor")) {
                     for (int i = 0; i < employees.size(); i++) {
-                        if (employees.contains(employees.get(eindex))) {
-                            if (employees.get(eindex).getAge() >= 30) {
-                                if (!employees.get(eindex).isOnLeave()) {
-                                    employees.get(eindex).setPosition(postion);
+                        if (employees.get(i).getId().equalsIgnoreCase(id)) {
+                            if (employees.get(i).getAge() >= 30) {
+                                if (!employees.get(i).isOnLeave()) {
+                                    employees.get(i).setPosition(postion);
                                     return ResponseEntity.status(204).body("Employee promoted successfully");
                                 }else {
                                     return ResponseEntity.status(404).body("The Employee  On Leave");
@@ -165,6 +174,5 @@ public class EController {
                 }
             }
             return ResponseEntity.status(404).body("employee not found try again later");
-        }
     }
 }
